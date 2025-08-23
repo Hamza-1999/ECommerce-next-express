@@ -1,25 +1,27 @@
-"use client"
+"use client";
 
-import { Header } from "@/components/user/header"
-import { Footer } from "@/components/user/footer"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { mockAuth } from "@/lib/auth"
-import { mockOrders } from "@/lib/mock-data"
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
-import { Package, CreditCard, LogOut, Edit } from "lucide-react"
+import { Header } from "@/components/user/header";
+import { Footer } from "@/components/user/footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+// import { mockAuth } from "@/lib/auth"
+import { mockOrders } from "@/lib/mock-data";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Package, CreditCard, LogOut, Edit } from "lucide-react";
+import { useMyProfile } from "@/lib/hooks/api";
 
 export default function AccountPage() {
-  const router = useRouter()
-  const [user, setUser] = useState(mockAuth.currentUser)
-  const [isEditing, setIsEditing] = useState(false)
+  const router = useRouter();
+  const { data } = useMyProfile();
+  // const [user, setUser] = useState(mockAuth.currentUser)
+  const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     firstName: "Sarah",
     lastName: "Ahmed",
@@ -32,44 +34,40 @@ export default function AccountPage() {
       zipCode: "10001",
       country: "United States",
     },
-  })
+  });
 
-  useEffect(() => {
-    if (!mockAuth.isAuthenticated()) {
-      router.push("/user/login")
-    }
-  }, [router])
+  // useEffect(() => {
+  //   if (!mockAuth.isAuthenticated()) {
+  //     router.push("/user/login")
+  //   }
+  // }, [router])
 
   const handleLogout = () => {
-    mockAuth.logout()
-    router.push("/")
-  }
+    // mockAuth.logout()
+    router.push("/");
+  };
 
   const handleSaveProfile = () => {
-    setIsEditing(false)
-    alert("Profile updated successfully!")
-  }
+    setIsEditing(false);
+    alert("Profile updated successfully!");
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "delivered":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "shipped":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "processing":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800";
       case "pending":
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
       case "cancelled":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
-
-  if (!user) {
-    return null
-  }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -79,9 +77,15 @@ export default function AccountPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">My Account</h1>
-            <p className="text-slate-600">Welcome back, {profileData.firstName}!</p>
+            <p className="text-slate-600">
+              Welcome back, {profileData.firstName}!
+            </p>
           </div>
-          <Button onClick={handleLogout} variant="outline" className="text-red-600 hover:text-red-700 bg-transparent">
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="text-red-600 hover:text-red-700 bg-transparent"
+          >
             <LogOut className="h-4 w-4 mr-2" />
             Sign Out
           </Button>
@@ -134,7 +138,9 @@ export default function AccountPage() {
                       <CreditCard className="h-6 w-6 text-blue-800" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-slate-900">$847.50</p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        $847.50
+                      </p>
                       <p className="text-sm text-slate-600">Total Spent</p>
                     </div>
                   </div>
@@ -150,16 +156,27 @@ export default function AccountPage() {
               <CardContent>
                 <div className="space-y-4">
                   {mockOrders.slice(0, 3).map((order) => (
-                    <div key={order._id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div
+                      key={order._id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
                       <div className="flex items-center gap-4">
                         <div>
-                          <p className="font-semibold">Order #{order._id.toUpperCase()}</p>
-                          <p className="text-sm text-slate-600">{order.items.length} items</p>
+                          <p className="font-semibold">
+                            Order #{order._id.toUpperCase()}
+                          </p>
+                          <p className="text-sm text-slate-600">
+                            {order.items.length} items
+                          </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
-                        <p className="text-sm text-slate-600 mt-1">${order.totalAmount.toFixed(2)}</p>
+                        <Badge className={getStatusColor(order.status)}>
+                          {order.status}
+                        </Badge>
+                        <p className="text-sm text-slate-600 mt-1">
+                          ${order.totalAmount.toFixed(2)}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -180,12 +197,17 @@ export default function AccountPage() {
                     <div key={order._id} className="border rounded-lg p-6">
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <h3 className="font-semibold">Order #{order._id.toUpperCase()}</h3>
+                          <h3 className="font-semibold">
+                            Order #{order._id.toUpperCase()}
+                          </h3>
                           <p className="text-sm text-slate-600">
-                            Placed on {new Date(order.createdAt).toLocaleDateString()}
+                            Placed on{" "}
+                            {new Date(order.createdAt).toLocaleDateString()}
                           </p>
                         </div>
-                        <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
+                        <Badge className={getStatusColor(order.status)}>
+                          {order.status}
+                        </Badge>
                       </div>
 
                       <div className="space-y-3">
@@ -201,10 +223,13 @@ export default function AccountPage() {
                             <div className="flex-1">
                               <p className="font-medium">Premium Hijab</p>
                               <p className="text-sm text-slate-600">
-                                {item.color} • {item.size} • Qty: {item.quantity}
+                                {item.color} • {item.size} • Qty:{" "}
+                                {item.quantity}
                               </p>
                             </div>
-                            <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                            <p className="font-semibold">
+                              ${(item.price * item.quantity).toFixed(2)}
+                            </p>
                           </div>
                         ))}
                       </div>
@@ -214,12 +239,19 @@ export default function AccountPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm text-slate-600">
-                            Shipping to: {order.shippingAddress.city}, {order.shippingAddress.state}
+                            Shipping to: {order.shippingAddress.city},{" "}
+                            {order.shippingAddress.state}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold">Total: ${order.totalAmount.toFixed(2)}</p>
-                          <Button size="sm" variant="outline" className="mt-2 bg-transparent">
+                          <p className="font-semibold">
+                            Total: ${order.totalAmount.toFixed(2)}
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-2 bg-transparent"
+                          >
                             View Details
                           </Button>
                         </div>
@@ -237,7 +269,9 @@ export default function AccountPage() {
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Personal Information</CardTitle>
                 <Button
-                  onClick={() => (isEditing ? handleSaveProfile() : setIsEditing(true))}
+                  onClick={() =>
+                    isEditing ? handleSaveProfile() : setIsEditing(true)
+                  }
                   variant="outline"
                   size="sm"
                 >
@@ -252,7 +286,12 @@ export default function AccountPage() {
                     <Input
                       id="firstName"
                       value={profileData.firstName}
-                      onChange={(e) => setProfileData((prev) => ({ ...prev, firstName: e.target.value }))}
+                      onChange={(e) =>
+                        setProfileData((prev) => ({
+                          ...prev,
+                          firstName: e.target.value,
+                        }))
+                      }
                       disabled={!isEditing}
                     />
                   </div>
@@ -261,7 +300,12 @@ export default function AccountPage() {
                     <Input
                       id="lastName"
                       value={profileData.lastName}
-                      onChange={(e) => setProfileData((prev) => ({ ...prev, lastName: e.target.value }))}
+                      onChange={(e) =>
+                        setProfileData((prev) => ({
+                          ...prev,
+                          lastName: e.target.value,
+                        }))
+                      }
                       disabled={!isEditing}
                     />
                   </div>
@@ -273,7 +317,12 @@ export default function AccountPage() {
                     id="email"
                     type="email"
                     value={profileData.email}
-                    onChange={(e) => setProfileData((prev) => ({ ...prev, email: e.target.value }))}
+                    onChange={(e) =>
+                      setProfileData((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
                     disabled={!isEditing}
                   />
                 </div>
@@ -283,7 +332,12 @@ export default function AccountPage() {
                   <Input
                     id="phone"
                     value={profileData.phone}
-                    onChange={(e) => setProfileData((prev) => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setProfileData((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
                     disabled={!isEditing}
                   />
                 </div>
@@ -307,7 +361,9 @@ export default function AccountPage() {
                         <p className="text-slate-600">
                           {profileData.address.street}
                           <br />
-                          {profileData.address.city}, {profileData.address.state} {profileData.address.zipCode}
+                          {profileData.address.city},{" "}
+                          {profileData.address.state}{" "}
+                          {profileData.address.zipCode}
                           <br />
                           {profileData.address.country}
                         </p>
@@ -340,7 +396,9 @@ export default function AccountPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Email Notifications</h4>
-                    <p className="text-sm text-slate-600">Receive updates about your orders and promotions</p>
+                    <p className="text-sm text-slate-600">
+                      Receive updates about your orders and promotions
+                    </p>
                   </div>
                   <Button variant="outline" size="sm">
                     Manage
@@ -352,7 +410,9 @@ export default function AccountPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Password</h4>
-                    <p className="text-sm text-slate-600">Change your account password</p>
+                    <p className="text-sm text-slate-600">
+                      Change your account password
+                    </p>
                   </div>
                   <Button variant="outline" size="sm">
                     Change Password
@@ -364,7 +424,9 @@ export default function AccountPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Two-Factor Authentication</h4>
-                    <p className="text-sm text-slate-600">Add an extra layer of security to your account</p>
+                    <p className="text-sm text-slate-600">
+                      Add an extra layer of security to your account
+                    </p>
                   </div>
                   <Button variant="outline" size="sm">
                     Enable
@@ -376,7 +438,9 @@ export default function AccountPage() {
                 <div className="flex items-center justify-between text-red-600">
                   <div>
                     <h4 className="font-medium">Delete Account</h4>
-                    <p className="text-sm">Permanently delete your account and all data</p>
+                    <p className="text-sm">
+                      Permanently delete your account and all data
+                    </p>
                   </div>
                   <Button
                     variant="outline"
@@ -394,5 +458,5 @@ export default function AccountPage() {
 
       <Footer />
     </div>
-  )
+  );
 }
