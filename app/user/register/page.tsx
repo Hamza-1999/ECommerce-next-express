@@ -28,6 +28,11 @@ export default function RegisterPage() {
     confirmPassword: "",
     agreeToTerms: false,
     subscribeNewsletter: true,
+    address: {
+      house: "",
+      zip: "",
+      city: "",
+    },
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -64,7 +69,18 @@ export default function RegisterPage() {
 
     if (!validateForm()) return
 
-    register({ firstName: formData.firstName, lastName: formData.lastName, email: formData.email, password: formData.password, phone: formData.phone }, {
+    register({ 
+      firstName: formData.firstName, 
+      lastName: formData.lastName, 
+      email: formData.email, 
+      password: formData.password, 
+      phone: formData.phone,
+      address: {
+        house: formData.address.house,
+        zip: formData.address.zip,
+        city: formData.address.city,
+      }
+    }, {
       onSuccess: () => {
         toast.success("Account created successfully! Please sign in.")
         router.push("/user/login")
@@ -172,6 +188,66 @@ export default function RegisterPage() {
                       className="pl-10 h-12 border-slate-200 focus:border-amber-500 focus:ring-amber-500"
                     />
                     <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-slate-900">Address Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="house" className="text-sm font-medium text-slate-700">House/Street Address</Label>
+                      <Input
+                        id="house"
+                        value={formData.address.house}
+                        onChange={(e) => 
+                          setFormData((prev) => ({
+                            ...prev,
+                            address: {
+                              ...prev.address,
+                              house: e.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="123 Main Street"
+                        className="h-12 border-slate-200 focus:border-amber-500 focus:ring-amber-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="city" className="text-sm font-medium text-slate-700">City</Label>
+                      <Input
+                        id="city"
+                        value={formData.address.city}
+                        onChange={(e) => 
+                          setFormData((prev) => ({
+                            ...prev,
+                            address: {
+                              ...prev.address,
+                              city: e.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="New York"
+                        className="h-12 border-slate-200 focus:border-amber-500 focus:ring-amber-500"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="zip" className="text-sm font-medium text-slate-700">ZIP Code</Label>
+                      <Input
+                        id="zip"
+                        value={formData.address.zip}
+                        onChange={(e) => 
+                          setFormData((prev) => ({
+                            ...prev,
+                            address: {
+                              ...prev.address,
+                              zip: e.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="10001"
+                        className="h-12 border-slate-200 focus:border-amber-500 focus:ring-amber-500"
+                      />
+                    </div>
                   </div>
                 </div>
 

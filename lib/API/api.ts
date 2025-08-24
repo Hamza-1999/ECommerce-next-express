@@ -28,6 +28,11 @@ export interface RegisterProps {
   email: string;
   password: string;
   phone: string;
+  address: {
+    house: string;
+    zip: string;
+    city: string;
+  };
 }
 
 export const Register = async ({
@@ -36,12 +41,14 @@ export const Register = async ({
   email,
   password,
   phone,
+  address,
 }: RegisterProps): Promise<User | null> => {
   console.log("Attempting to register user:", {
     firstName,
     lastName,
     email,
     phone,
+    address,
   });
   try {
     const res = await axios.post(
@@ -52,6 +59,7 @@ export const Register = async ({
         email,
         password,
         phone,
+        address,
       },
       {
         withCredentials: true,
@@ -66,6 +74,30 @@ export const Register = async ({
 };
 
 export const MyProfile = async () => {
-  const res = await axios.get("http://localhost:5000/auth/myProfile");
+  const res = await axios.get("http://localhost:5000/auth/myProfile", {
+    withCredentials: true,
+  });
+  return res.data;
+};
+
+export interface updateProfile {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  address?: {
+    house?: string;
+    zip?: string;
+    city?: string;
+  };
+}
+
+export const UpdateProfile = async (profile: updateProfile) => {
+  const res = await axios.patch(
+    "http://localhost:5000/auth/updateProfile",
+    profile,
+    {
+      withCredentials: true,
+    }
+  );
   return res.data;
 };

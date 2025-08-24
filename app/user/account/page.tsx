@@ -15,32 +15,41 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Package, CreditCard, LogOut, Edit } from "lucide-react";
-import { useMyProfile } from "@/lib/hooks/api";
+import { useMyProfile, useUpdateProfile } from "@/lib/hooks/api";
+import { toast } from "sonner";
 
 export default function AccountPage() {
   const router = useRouter();
-  const { data } = useMyProfile();
-  // const [user, setUser] = useState(mockAuth.currentUser)
+  const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
+  const { data, isLoading, refetch } = useMyProfile();
+  const profileData = data?.user;
   const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState({
-    firstName: "Sarah",
-    lastName: "Ahmed",
-    email: "customer@example.com",
-    phone: "+1 (555) 123-4567",
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
     address: {
-      street: "123 Main Street",
-      city: "New York",
-      state: "NY",
-      zipCode: "10001",
-      country: "United States",
+      house: "",
+      zip: "",
+      city: "",
     },
   });
 
-  // useEffect(() => {
-  //   if (!mockAuth.isAuthenticated()) {
-  //     router.push("/user/login")
-  //   }
-  // }, [router])
+  // Update form data when profile data loads
+  useEffect(() => {
+    if (profileData) {
+      setFormData({
+        firstName: profileData.firstName || "",
+        lastName: profileData.lastName || "",
+        phone: profileData.phone || "",
+        address: {
+          house: profileData.address?.house || "",
+          zip: profileData.address?.zip || "",
+          city: profileData.address?.city || "",
+        },
+      });
+    }
+  }, [profileData]);
 
   const handleLogout = () => {
     // mockAuth.logout()
@@ -48,8 +57,46 @@ export default function AccountPage() {
   };
 
   const handleSaveProfile = () => {
+    updateProfile(
+      {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        address: {
+          house: formData.address.house,
+          zip: formData.address.zip,
+          city: formData.address.city,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+          toast.success("Profile updated successfully!");
+          refetch();
+        },
+        onError: (error) => {
+          toast.error("Failed to update profile. Please try again.");
+          console.error("Profile update error:", error);
+        },
+      }
+    );
+  };
+
+  const handleCancelEdit = () => {
+    // Reset form data to original values
+    if (profileData) {
+      setFormData({
+        firstName: profileData.firstName || "",
+        lastName: profileData.lastName || "",
+        phone: profileData.phone || "",
+        address: {
+          house: profileData.address?.house || "",
+          zip: profileData.address?.zip || "",
+          city: profileData.address?.city || "",
+        },
+      });
+    }
     setIsEditing(false);
-    alert("Profile updated successfully!");
   };
 
   const getStatusColor = (status: string) => {
@@ -78,7 +125,7 @@ export default function AccountPage() {
           <div>
             <h1 className="text-3xl font-bold text-slate-900">My Account</h1>
             <p className="text-slate-600">
-              Welcome back, {profileData.firstName}!
+              Welcome back, {profileData?.firstName}!
             </p>
           </div>
           <Button
@@ -268,16 +315,36 @@ export default function AccountPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Personal Information</CardTitle>
-                <Button
-                  onClick={() =>
-                    isEditing ? handleSaveProfile() : setIsEditing(true)
-                  }
-                  variant="outline"
-                  size="sm"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  {isEditing ? "Save Changes" : "Edit Profile"}
-                </Button>
+                <div className="flex gap-2">
+                  {isEditing ? (
+                    <>
+                      <Button
+                        onClick={handleSaveProfile}
+                        size="sm"
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? "Saving..." : "Save Changes"}
+                      </Button>
+                      <Button
+                        onClick={handleCancelEdit}
+                        variant="outline"
+                        size="sm"
+                        disabled={isUpdating}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      onClick={() => setIsEditing(true)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -285,28 +352,28 @@ export default function AccountPage() {
                     <Label htmlFor="firstName">First Name</Label>
                     <Input
                       id="firstName"
-                      value={profileData.firstName}
+                      value={formData.firstName}
                       onChange={(e) =>
-                        setProfileData((prev) => ({
+                        setFormData((prev) => ({
                           ...prev,
                           firstName: e.target.value,
                         }))
                       }
-                      disabled={!isEditing}
+                      disabled={!isEditing || isUpdating}
                     />
                   </div>
                   <div>
                     <Label htmlFor="lastName">Last Name</Label>
                     <Input
                       id="lastName"
-                      value={profileData.lastName}
+                      value={formData.lastName}
                       onChange={(e) =>
-                        setProfileData((prev) => ({
+                        setFormData((prev) => ({
                           ...prev,
                           lastName: e.target.value,
                         }))
                       }
-                      disabled={!isEditing}
+                      disabled={!isEditing || isUpdating}
                     />
                   </div>
                 </div>
@@ -316,30 +383,90 @@ export default function AccountPage() {
                   <Input
                     id="email"
                     type="email"
-                    value={profileData.email}
-                    onChange={(e) =>
-                      setProfileData((prev) => ({
-                        ...prev,
-                        email: e.target.value,
-                      }))
-                    }
-                    disabled={!isEditing}
+                    value={profileData?.email || ""}
+                    disabled={true}
+                    className="bg-gray-50"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Email address cannot be changed
+                  </p>
                 </div>
 
                 <div>
                   <Label htmlFor="phone">Phone Number</Label>
                   <Input
                     id="phone"
-                    value={profileData.phone}
+                    value={formData.phone}
                     onChange={(e) =>
-                      setProfileData((prev) => ({
+                      setFormData((prev) => ({
                         ...prev,
                         phone: e.target.value,
                       }))
                     }
-                    disabled={!isEditing}
+                    disabled={!isEditing || isUpdating}
                   />
+                </div>
+
+                <Separator className="my-6" />
+                
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Address Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="house">House/Street Address</Label>
+                      <Input
+                        id="house"
+                        value={formData.address.house}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            address: {
+                              ...prev.address,
+                              house: e.target.value,
+                            },
+                          }))
+                        }
+                        disabled={!isEditing || isUpdating}
+                        placeholder="123 Main Street"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="city">City</Label>
+                      <Input
+                        id="city"
+                        value={formData.address.city}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            address: {
+                              ...prev.address,
+                              city: e.target.value,
+                            },
+                          }))
+                        }
+                        disabled={!isEditing || isUpdating}
+                        placeholder="New York"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="zip">ZIP Code</Label>
+                      <Input
+                        id="zip"
+                        value={formData.address.zip}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            address: {
+                              ...prev.address,
+                              zip: e.target.value,
+                            },
+                          }))
+                        }
+                        disabled={!isEditing || isUpdating}
+                        placeholder="10001"
+                      />
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -359,13 +486,13 @@ export default function AccountPage() {
                       <div>
                         <p className="font-semibold">Home Address</p>
                         <p className="text-slate-600">
-                          {profileData.address.street}
+                          {profileData?.address?.house || "No address provided"}
                           <br />
-                          {profileData.address.city},{" "}
-                          {profileData.address.state}{" "}
-                          {profileData.address.zipCode}
-                          <br />
-                          {profileData.address.country}
+                          {profileData?.address?.city && profileData?.address?.zip && (
+                            <>
+                              {profileData.address.city}, {profileData.address.zip}
+                            </>
+                          )}
                         </p>
                         <Badge variant="secondary" className="mt-2">
                           Default

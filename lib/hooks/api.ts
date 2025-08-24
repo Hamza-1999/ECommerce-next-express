@@ -5,6 +5,8 @@ import {
   MyProfile,
   Register,
   RegisterProps,
+  updateProfile,
+  UpdateProfile,
 } from "../API/api";
 
 export const useLogin = () => {
@@ -21,8 +23,9 @@ export const useRegister = () => {
       email,
       password,
       phone,
+      address
     }: RegisterProps) =>
-      Register({ firstName, lastName, email, password, phone }),
+      Register({ firstName, lastName, email, password, phone, address }),
   });
 };
 
@@ -30,5 +33,11 @@ export const useMyProfile = () => {
   return useQuery({
     queryKey: ["MyProfile"],
     queryFn: MyProfile,
+  });
+};
+
+export const useUpdateProfile = () => {
+  return useMutation({
+    mutationFn: (data: updateProfile) => UpdateProfile(data),
   });
 };
