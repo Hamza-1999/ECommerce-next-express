@@ -15,13 +15,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Package, CreditCard, LogOut, Edit } from "lucide-react";
-import { useMyProfile, useUpdateProfile } from "@/lib/hooks/api";
+import { useLogout, useMyProfile, useUpdateProfile } from "@/lib/hooks/api";
 import { toast } from "sonner";
 
 export default function AccountPage() {
   const router = useRouter();
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
   const { data, isLoading, refetch } = useMyProfile();
+  const { mutate: loggingOut } = useLogout();
   const profileData = data?.user;
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,8 +53,15 @@ export default function AccountPage() {
   }, [profileData]);
 
   const handleLogout = () => {
-    // mockAuth.logout()
-    router.push("/");
+    loggingOut(undefined, {
+      onSuccess: () => {
+        toast.success("successfully log out");
+        router.push("/user/login");
+      },
+      onError: (error: any) => {
+        toast.error(error?.response?.data?.message || "error to logout");
+      },
+    });
   };
 
   const handleSaveProfile = () => {
@@ -408,9 +416,11 @@ export default function AccountPage() {
                 </div>
 
                 <Separator className="my-6" />
-                
+
                 <div>
-                  <h3 className="text-lg font-semibold mb-4">Address Information</h3>
+                  <h3 className="text-lg font-semibold mb-4">
+                    Address Information
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="house">House/Street Address</Label>
@@ -488,11 +498,13 @@ export default function AccountPage() {
                         <p className="text-slate-600">
                           {profileData?.address?.house || "No address provided"}
                           <br />
-                          {profileData?.address?.city && profileData?.address?.zip && (
-                            <>
-                              {profileData.address.city}, {profileData.address.zip}
-                            </>
-                          )}
+                          {profileData?.address?.city &&
+                            profileData?.address?.zip && (
+                              <>
+                                {profileData.address.city},{" "}
+                                {profileData.address.zip}
+                              </>
+                            )}
                         </p>
                         <Badge variant="secondary" className="mt-2">
                           Default

@@ -1,20 +1,22 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { ShoppingBag, Search, User, Menu } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { cart } from "@/lib/cart"
-import { useState, useEffect } from "react"
+import Link from "next/link";
+import { ShoppingBag, Search, User, Menu, Loader } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cart } from "@/lib/cart";
+import { useState, useEffect } from "react";
+import { useMyProfile } from "@/lib/hooks/api";
 
 export function Header() {
-  const [cartItemCount, setCartItemCount] = useState(0)
+  const [cartItemCount, setCartItemCount] = useState(0);
+  const { data, isLoading } = useMyProfile();
 
   useEffect(() => {
-    cart.loadFromStorage()
-    setCartItemCount(cart.getTotalItems())
-  }, [])
+    cart.loadFromStorage();
+    setCartItemCount(cart.getTotalItems());
+  }, []);
 
   return (
     <header className="border-b bg-white">
@@ -43,13 +45,22 @@ export function Header() {
             <Link href="/" className="hover:text-amber-800 transition-colors">
               Home
             </Link>
-            <Link href="/products" className="hover:text-amber-800 transition-colors">
+            <Link
+              href="/products"
+              className="hover:text-amber-800 transition-colors"
+            >
               Products
             </Link>
-            <Link href="/about" className="hover:text-amber-800 transition-colors">
+            <Link
+              href="/about"
+              className="hover:text-amber-800 transition-colors"
+            >
               About Us
             </Link>
-            <Link href="/contact" className="hover:text-amber-800 transition-colors">
+            <Link
+              href="/contact"
+              className="hover:text-amber-800 transition-colors"
+            >
               Contact
             </Link>
           </nav>
@@ -63,11 +74,27 @@ export function Header() {
               </Button>
             </div>
 
-            <Link href="/user/account">
-              <Button size="icon" variant="ghost">
-                <User className="h-4 w-4" />
-              </Button>
-            </Link>
+            <Button
+              className="w-max hover:bg-transparent cursor-pointer"
+              size="icon"
+              variant="ghost"
+            >
+              {isLoading ? (
+                <Loader className="animate-spin h-4 w-4" />
+              ) : data?.user ? (
+                <Link href="/user/account">
+                  <div className="w-max">
+                    <div className="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      {data?.user?.firstName?.charAt(0)?.toUpperCase()}
+                    </div>
+                  </div>
+                </Link>
+              ) : (
+                <Link href="/user/login">
+                  <User className="h-4 w-4" />
+                </Link>
+              )}
+            </Button>
 
             <Link href="/cart" className="relative">
               <Button size="icon" variant="ghost">
@@ -92,13 +119,19 @@ export function Header() {
                   <Link href="/" className="text-lg hover:text-amber-800">
                     Home
                   </Link>
-                  <Link href="/products" className="text-lg hover:text-amber-800">
+                  <Link
+                    href="/products"
+                    className="text-lg hover:text-amber-800"
+                  >
                     Products
                   </Link>
                   <Link href="/about" className="text-lg hover:text-amber-800">
                     About Us
                   </Link>
-                  <Link href="/contact" className="text-lg hover:text-amber-800">
+                  <Link
+                    href="/contact"
+                    className="text-lg hover:text-amber-800"
+                  >
                     Contact
                   </Link>
                   <div className="mt-4">
@@ -111,5 +144,5 @@ export function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

@@ -101,3 +101,10 @@ export const UpdateProfile = async (profile: updateProfile) => {
   );
   return res.data;
 };
+
+export const Logout = async () => {
+  const res = await axios.get("http://localhost:5000/auth/logout", {
+    withCredentials: true,
+  });
+  return res.data;
+};

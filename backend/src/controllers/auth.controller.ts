@@ -73,7 +73,7 @@ export const Register = async (req: Request, res: Response) => {
       firstName,
       lastName,
       phone,
-      address
+      address,
     });
     const { password: _, ...userWithoutPassword } = user.toObject();
     res.status(201).json({
@@ -131,6 +131,29 @@ export const updateProfile = async (req: Request, res: Response) => {
       user: updatedUser,
     });
   } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+      error: (error as Error).message,
+    });
+  }
+};
+
+export const Logout = async (req: Request, res: Response) => {
+  try {
+    console.log("object");
+    // Clear the authentication cookie
+    res.clearCookie("Ecommerce", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+
+    res.status(200).json({
+      message: "Logout successful",
+      success: true,
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
     res.status(500).json({
       message: "Internal server error",
       error: (error as Error).message,

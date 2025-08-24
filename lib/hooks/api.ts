@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Login,
   LoginProps,
+  Logout,
   MyProfile,
   Register,
   RegisterProps,
@@ -23,7 +24,7 @@ export const useRegister = () => {
       email,
       password,
       phone,
-      address
+      address,
     }: RegisterProps) =>
       Register({ firstName, lastName, email, password, phone, address }),
   });
@@ -39,5 +40,11 @@ export const useMyProfile = () => {
 export const useUpdateProfile = () => {
   return useMutation({
     mutationFn: (data: updateProfile) => UpdateProfile(data),
+  });
+};
+
+export const useLogout = () => {
+  return useMutation({
+    mutationFn: Logout,
   });
 };

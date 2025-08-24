@@ -3,7 +3,11 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret_key_Ecommerce";
 
-export const authenticateUser = (req: Request, res: Response, next: NextFunction) => {
+export const authenticateUser = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const token = req.cookies?.Ecommerce;
     if (!token) return res.status(401).json({ message: "Unauthorized" });
