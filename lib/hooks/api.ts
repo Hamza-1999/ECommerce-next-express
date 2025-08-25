@@ -1,11 +1,15 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  AddAddress,
+  IAddAddress,
   Login,
   LoginProps,
   Logout,
   MyProfile,
   Register,
   RegisterProps,
+  RemoveAddress,
+  UpdateAddress,
   updateProfile,
   UpdateProfile,
 } from "../API/api";
@@ -46,5 +50,24 @@ export const useUpdateProfile = () => {
 export const useLogout = () => {
   return useMutation({
     mutationFn: Logout,
+  });
+};
+
+export const useAddAddress = () => {
+  return useMutation({
+    mutationFn: (data: IAddAddress) => AddAddress(data),
+  });
+};
+
+export const useDeleteAddress = () => {
+  return useMutation({
+    mutationFn: (id: string) => RemoveAddress(id),
+  });
+};
+
+export const useUpdateAddress = () => {
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: IAddAddress }) =>
+      UpdateAddress(id, data),
   });
 };

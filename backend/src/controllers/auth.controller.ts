@@ -138,6 +138,182 @@ export const updateProfile = async (req: Request, res: Response) => {
   }
 };
 
+export const addAddress = async (req: Request, res: Response) => {
+  try {
+    if (!(req as any).user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { house, city, zip, label = "Home", isDefault = false } = req.body;
+    console.log(req.body, "jhgkjhgjhghjghjg");
+
+    // Validate required fields
+    if (!house) {
+      return res
+        .status(400)
+        .json({ message: "House/Street address is required" });
+    }
+    if (!city) {
+      return res.status(400).json({ message: "City is required" });
+    }
+    if (!zip) {
+      return res.status(400).json({ message: "ZIP code is required" });
+    }
+
+    const userId = (req as any).user.id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // If this is the first address or isDefault is true, set it as default
+    let shouldSetAsDefault = isDefault;
+    if (!user.addresses || user.addresses.length === 0) {
+      shouldSetAsDefault = true;
+    }
+
+    // If setting as default, remove default from other addresses
+    if (shouldSetAsDefault) {
+      await User.updateMany(
+        { _id: userId, "addresses.isDefault": true },
+        { $set: { "addresses.$.isDefault": false } }
+      );
+    }
+
+    // Add the new address
+    const newAddress = {
+      house,
+      city,
+      zip,
+      label,
+      isDefault: shouldSetAsDefault,
+    };
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $push: { addresses: newAddress } },
+      { new: true, select: "-password" }
+    );
+
+    res.status(201).json({
+      message: "Address added successfully",
+      address: newAddress,
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Add address error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: (error as Error).message,
+    });
+  }
+};
+
+export const deleteAddress = async (req: Request, res: Response) => {
+  try {
+    if (!(req as any).user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { id } = req.params; // <-- address _id
+    const userId = (req as any).user.id;
+
+    // Remove address using MongoDB $pull
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $pull: { addresses: { _id: id } } },
+      { new: true, select: "-password" }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const addressStillExists = updatedUser.addresses.some(
+      (addr: any) => addr._id.toString() === id
+    );
+
+    if (addressStillExists) {
+      return res.status(400).json({ message: "Address could not be deleted" });
+    }
+
+    res.status(200).json({
+      message: "Address deleted successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Delete address error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: (error as Error).message,
+    });
+  }
+};
+
+export const UpdateAddress = async (req: Request, res: Response) => {
+  try {
+    if (!(req as any).user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const { id } = req.params; // address _id
+    const userId = (req as any).user.id;
+    const { house, city, zip, label = "home", isDefault = false } = req.body;
+
+    if (!house) {
+      return res
+        .status(400)
+        .json({ message: "House/Street address is required" });
+    }
+    if (!city) {
+      return res.status(400).json({ message: "City is required" });
+    }
+    if (!zip) {
+      return res.status(400).json({ message: "ZIP code is required" });
+    }
+
+    // If isDefault is true, reset others first
+    if (isDefault) {
+      await User.updateMany(
+        { _id: userId, "addresses.isDefault": true },
+        { $set: { "addresses.$[elem].isDefault": false } },
+        { arrayFilters: [{ "elem.isDefault": true }] }
+      );
+    }
+
+    // Update the selected address
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId, "addresses._id": id },
+      {
+        $set: {
+          "addresses.$.house": house,
+          "addresses.$.city": city,
+          "addresses.$.zip": zip,
+          "addresses.$.label": label,
+          "addresses.$.isDefault": !!isDefault,
+        },
+      },
+      { new: true, select: "-password" }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    res.status(200).json({
+      message: "Address updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Update address error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: (error as Error).message,
+    });
+  }
+};
+
 export const Logout = async (req: Request, res: Response) => {
   try {
     console.log("object");

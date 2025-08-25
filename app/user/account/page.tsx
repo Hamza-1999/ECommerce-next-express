@@ -9,16 +9,40 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 // import { mockAuth } from "@/lib/auth"
 import { mockOrders } from "@/lib/mock-data";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Package, CreditCard, LogOut, Edit } from "lucide-react";
-import { useLogout, useMyProfile, useUpdateProfile } from "@/lib/hooks/api";
+import {
+  useAddAddress,
+  useDeleteAddress,
+  useLogout,
+  useMyProfile,
+  useUpdateProfile,
+} from "@/lib/hooks/api";
 import { toast } from "sonner";
+import useStore from "@/components/store/store";
 
 export default function AccountPage() {
+  const { mutate: deleteAddress } = useDeleteAddress();
+  const { mutate: addAddress } = useAddAddress();
+  const { setLoggedIn } = useStore();
   const router = useRouter();
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
   const { data, isLoading, refetch } = useMyProfile();
@@ -36,9 +60,20 @@ export default function AccountPage() {
     },
   });
 
+  // Address modal state
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [addressFormData, setAddressFormData] = useState({
+    house: "",
+    city: "",
+    zip: "",
+    label: "Home",
+    isDefault: false,
+  });
+
   // Update form data when profile data loads
   useEffect(() => {
     if (profileData) {
+      setLoggedIn(profileData.firstName);
       setFormData({
         firstName: profileData.firstName || "",
         lastName: profileData.lastName || "",
@@ -55,8 +90,10 @@ export default function AccountPage() {
   const handleLogout = () => {
     loggingOut(undefined, {
       onSuccess: () => {
+        setLoggedIn("");
         toast.success("successfully log out");
         router.push("/user/login");
+        refetch();
       },
       onError: (error: any) => {
         toast.error(error?.response?.data?.message || "error to logout");
@@ -105,6 +142,75 @@ export default function AccountPage() {
       });
     }
     setIsEditing(false);
+  };
+
+  // Address form handlers
+  const handleAddressInputChange = (field: string, value: string | boolean) => {
+    setAddressFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleDelete = (id: string) => {
+    deleteAddress(id, {
+      onSuccess: () => {
+        toast.success("Delete address successfully");
+        refetch();
+      },
+      onError: (err: any) => {
+        toast.error(
+          err?.response?.data?.message || "Error in Deleting address"
+        );
+      },
+    });
+  };
+
+  // const handleUpdate(id:string)
+
+  const handleAddAddress = () => {
+    // Validate required fields
+    if (
+      !addressFormData.house ||
+      !addressFormData.city ||
+      !addressFormData.zip
+    ) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    addAddress(addressFormData, {
+      onSuccess: () => {
+        refetch();
+        console.log("Adding address:", addressFormData);
+        toast.success("Address added successfully!");
+        setAddressFormData({
+          house: "",
+          city: "",
+          zip: "",
+          label: "Home",
+          isDefault: false,
+        });
+        setIsAddressModalOpen(false);
+      },
+      onError: (err) => {
+        console.log(err, "error to add new address");
+        toast.error(
+          (err as any)?.response?.data?.message || `error to add new address`
+        );
+      },
+    });
+  };
+
+  const handleCancelAddAddress = () => {
+    setAddressFormData({
+      house: "",
+      city: "",
+      zip: "",
+      label: "Home",
+      isDefault: false,
+    });
+    setIsAddressModalOpen(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -487,41 +593,146 @@ export default function AccountPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Shipping Addresses</CardTitle>
-                <Button size="sm">Add New Address</Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold">Home Address</p>
-                        <p className="text-slate-600">
-                          {profileData?.address?.house || "No address provided"}
-                          <br />
-                          {profileData?.address?.city &&
-                            profileData?.address?.zip && (
-                              <>
-                                {profileData.address.city},{" "}
-                                {profileData.address.zip}
-                              </>
-                            )}
-                        </p>
-                        <Badge variant="secondary" className="mt-2">
-                          Default
-                        </Badge>
+                <Dialog
+                  open={isAddressModalOpen}
+                  onOpenChange={setIsAddressModalOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button size="sm">Add New Address</Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Add New Address</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="house">House/Street Address</Label>
+                        <Input
+                          id="house"
+                          value={addressFormData.house}
+                          onChange={(e) =>
+                            handleAddressInputChange("house", e.target.value)
+                          }
+                          placeholder="Enter your street address"
+                        />
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          Edit
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          Delete
-                        </Button>
+                      <div className="grid gap-2">
+                        <Label htmlFor="city">City</Label>
+                        <Input
+                          id="city"
+                          value={addressFormData.city}
+                          onChange={(e) =>
+                            handleAddressInputChange("city", e.target.value)
+                          }
+                          placeholder="Enter your city"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="zip">ZIP Code</Label>
+                        <Input
+                          id="zip"
+                          value={addressFormData.zip}
+                          onChange={(e) =>
+                            handleAddressInputChange("zip", e.target.value)
+                          }
+                          placeholder="Enter your ZIP code"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="label">Address Label</Label>
+                        <Select
+                          value={addressFormData.label}
+                          onValueChange={(value) =>
+                            handleAddressInputChange("label", value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select address type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Home">Home</SelectItem>
+                            <SelectItem value="Office">Office</SelectItem>
+                            <SelectItem value="Work">Work</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="isDefault"
+                          checked={addressFormData.isDefault}
+                          onChange={(e) =>
+                            handleAddressInputChange(
+                              "isDefault",
+                              e.target.checked
+                            )
+                          }
+                          className="rounded border-gray-300"
+                        />
+                        <Label htmlFor="isDefault">
+                          Set as default address
+                        </Label>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        variant="outline"
+                        onClick={handleCancelAddAddress}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={handleAddAddress}>Add Address</Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardHeader>
+              {profileData?.addresses.length > 0 ? (
+                profileData?.addresses?.map((address: any, i: number) => (
+                  <CardContent key={address.city + i}>
+                    <div className="space-y-4">
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-semibold">Home Address</p>
+                            <p className="text-slate-600">
+                              {address?.house || "No address provided"}
+                              <br />
+                              {address?.city && address?.zip && (
+                                <>
+                                  {address.city}, {address.zip}
+                                </>
+                              )}
+                            </p>
+                            <Badge variant="secondary" className="mt-2">
+                              {address.isDefault ? "Default" : ""}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleUpdate(address._id)}
+                              size="sm"
+                              variant="outline"
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              onClick={() => handleDelete(address._id)}
+                              size="sm"
+                              variant="outline"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                ))
+              ) : (
+                <p className="mx-auto w-max font-bold italic text-red-500 text-sm">
+                  *No Address Exists*
+                </p>
+              )}
             </Card>
           </TabsContent>
 

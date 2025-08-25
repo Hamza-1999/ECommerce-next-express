@@ -8,10 +8,11 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cart } from "@/lib/cart";
 import { useState, useEffect } from "react";
 import { useMyProfile } from "@/lib/hooks/api";
+import useStore from "../store/store";
 
 export function Header() {
+  const { loggedIn } = useStore();
   const [cartItemCount, setCartItemCount] = useState(0);
-  const { data, isLoading } = useMyProfile();
 
   useEffect(() => {
     cart.loadFromStorage();
@@ -79,13 +80,11 @@ export function Header() {
               size="icon"
               variant="ghost"
             >
-              {isLoading ? (
-                <Loader className="animate-spin h-4 w-4" />
-              ) : data?.user ? (
+              {loggedIn !== "" ? (
                 <Link href="/user/account">
                   <div className="w-max">
                     <div className="w-6 h-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
-                      {data?.user?.firstName?.charAt(0)?.toUpperCase()}
+                      {loggedIn.charAt(0)?.toUpperCase()}
                     </div>
                   </div>
                 </Link>

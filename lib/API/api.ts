@@ -108,3 +108,36 @@ export const Logout = async () => {
   });
   return res.data;
 };
+
+export interface IAddAddress {
+  house: string;
+  city: string;
+  zip: string;
+  label: string;
+  isDefault: boolean;
+}
+
+export const AddAddress = async (data: IAddAddress) => {
+  const res = await axios.post("http://localhost:5000/auth/addAddress", data, {
+    withCredentials: true,
+  });
+  return res.data;
+};
+
+export const RemoveAddress = async (id: string) => {
+  const res = await axios.delete(`http://localhost:5000/auth/address/${id}`, {
+    withCredentials: true,
+  });
+  return res.data;
+};
+
+export const UpdateAddress = async (id: string, data: IAddAddress) => {
+  const res = await axios.put(
+    `http://localhost:5000/auth/address/${id}`,
+    data,
+    {
+      withCredentials: true,
+    }
+  );
+  return res.data;
+};
