@@ -1,6 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   AddAddress,
+  CreatePassword,
+  forgotPassword,
   IAddAddress,
   Login,
   LoginProps,
@@ -69,5 +71,18 @@ export const useUpdateAddress = () => {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: IAddAddress }) =>
       UpdateAddress(id, data),
+  });
+};
+
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: ({ data }: { data: string }) => forgotPassword(data),
+  });
+};
+
+export const useCreatePassword = () => {
+  return useMutation({
+    mutationFn: ({ email, password }: { email: string; password: string }) =>
+      CreatePassword(email, password),
   });
 };

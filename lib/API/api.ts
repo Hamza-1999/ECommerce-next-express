@@ -141,3 +141,18 @@ export const UpdateAddress = async (id: string, data: IAddAddress) => {
   );
   return res.data;
 };
+
+export const forgotPassword = async (email: string) => {
+  const res = await axios.post(`http://localhost:5000/auth/forgotPassword`, {
+    email,
+  });
+  return res.data;
+};
+
+export const CreatePassword = async (email: string, password: string) => {
+  const res = await axios.post(
+    `http://localhost:5000/auth/create-password/${email}`,
+    { password }
+  );
+  return res.data;
+};
