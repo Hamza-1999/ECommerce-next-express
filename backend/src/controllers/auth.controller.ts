@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import { User } from "../models/User.model";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { read } from "fs";
+import { sendEmail } from "../services/emailService";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret_key_Ecommerce";
 
@@ -65,6 +67,14 @@ export const Register = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "address is required" });
     }
 
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      // throw new Error("User already exists");
+      return res.status(400).json({ message: "Email already exists" });
+
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
@@ -76,6 +86,12 @@ export const Register = async (req: Request, res: Response) => {
       address,
     });
     const { password: _, ...userWithoutPassword } = user.toObject();
+    await sendEmail({
+      to: "user@example.com",
+      subject: "Welcome to our Service",
+      templateName: "welcome",
+      templateData: { name: "John" },
+    });
     res.status(201).json({
       message: "User created successfully",
       user: userWithoutPassword,
@@ -333,6 +349,18 @@ export const Logout = async (req: Request, res: Response) => {
     res.status(500).json({
       message: "Internal server error",
       error: (error as Error).message,
+    });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const id = (req as any).user._id;
+  } catch (err) {
+    console.log(err, "error in forgot password");
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: (err as Error).message,
     });
   }
 };

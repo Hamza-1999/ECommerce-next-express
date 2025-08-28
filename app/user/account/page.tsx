@@ -11,7 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -34,12 +37,34 @@ import {
   useDeleteAddress,
   useLogout,
   useMyProfile,
+  useUpdateAddress,
   useUpdateProfile,
 } from "@/lib/hooks/api";
 import { toast } from "sonner";
 import useStore from "@/components/store/store";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { IAddAddress } from "@/lib/API/api";
 
+const formSchema = z.object({
+  house: z.string().min(2, "house is required field"),
+  city: z.string().min(2, "city is required field"),
+  zip: z.string().min(2, "zip is required field"),
+  label: z.string().nonempty("label is required field"),
+  isDefault: z.boolean(),
+});
 export default function AccountPage() {
+  const { mutate: updateAddress, isPending: updating } = useUpdateAddress();
   const { mutate: deleteAddress } = useDeleteAddress();
   const { mutate: addAddress } = useAddAddress();
   const { setLoggedIn } = useStore();
@@ -60,7 +85,19 @@ export default function AccountPage() {
     },
   });
 
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    // defaultValues: {
+    //   house: "",
+    //   zip: "",
+    //   city: "",
+    //   label: "Home",
+    //   isDefault: false,
+    // },
+  });
+
   // Address modal state
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [addressFormData, setAddressFormData] = useState({
     house: "",
@@ -93,7 +130,6 @@ export default function AccountPage() {
         setLoggedIn("");
         toast.success("successfully log out");
         router.push("/user/login");
-        refetch();
       },
       onError: (error: any) => {
         toast.error(error?.response?.data?.message || "error to logout");
@@ -166,7 +202,24 @@ export default function AccountPage() {
     });
   };
 
-  // const handleUpdate(id:string)
+  const handleAddressUpdate = async (id: string, data: IAddAddress) => {
+    await updateAddress(
+      { id, data },
+      {
+        onSuccess: () => {
+          toast.success("Address updated successfully");
+          refetch();
+          setEditingAddressId(null); // Open for this address
+        },
+        onError: (err: any) => {
+          console.log(err, "error in updating address");
+          toast.error(
+            err?.response?.data?.messga || "error occur in updating address"
+          );
+        },
+      }
+    );
+  };
 
   const handleAddAddress = () => {
     // Validate required fields
@@ -708,13 +761,177 @@ export default function AccountPage() {
                             </Badge>
                           </div>
                           <div className="flex gap-2">
-                            <Button
-                              onClick={() => handleUpdate(address._id)}
-                              size="sm"
-                              variant="outline"
+                            <Dialog
+                              open={editingAddressId === address._id}
+                              onOpenChange={(value) => {
+                                if (value) {
+                                  setEditingAddressId(address._id); // Open for this address
+                                  // When dialog opens, reset form values with current address
+                                  form.reset({
+                                    house: address.house,
+                                    city: address.city,
+                                    zip: address.zip,
+                                    label: address.label,
+                                    isDefault: address.isDefault,
+                                  });
+                                } else {
+                                  setEditingAddressId(null); // Close modal
+                                  form.reset(); // Reset to empty or default when closing
+                                }
+                              }}
                             >
-                              Edit
-                            </Button>
+                              <DialogTrigger asChild>
+                                <Button variant="outline">Edit</Button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader>
+                                  <DialogTitle>Edit Address</DialogTitle>
+                                  <DialogDescription>
+                                    Make changes to your address here. Click
+                                    save when you&apos;re done.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4">
+                                  <Form {...form}>
+                                    <form
+                                      onSubmit={form.handleSubmit((data: any) =>
+                                        handleAddressUpdate(
+                                          address._id as string,
+                                          data
+                                        )
+                                      )}
+                                      className="space-y-8"
+                                    >
+                                      <FormField
+                                        // defaultValue={address.house}
+                                        control={form.control}
+                                        name="house"
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel>House</FormLabel>
+                                            <FormControl>
+                                              <Input
+                                                placeholder="House...."
+                                                {...field}
+                                              />
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+                                      <FormField
+                                        // defaultValue={address.city}
+                                        control={form.control}
+                                        name="city"
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel>City</FormLabel>
+                                            <FormControl>
+                                              <Input
+                                                placeholder="City..."
+                                                {...field}
+                                              />
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+                                      <FormField
+                                        // defaultValue={address.zip}
+                                        control={form.control}
+                                        name="zip"
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel>ZIP</FormLabel>
+                                            <FormControl>
+                                              <Input
+                                                placeholder="ZIP Code..."
+                                                type="number"
+                                                {...field}
+                                              />
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+                                      <FormField
+                                        // defaultValue={address.label}
+                                        control={form.control}
+                                        name="label"
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel>Label</FormLabel>
+                                            <FormControl>
+                                              <Select
+                                                value={addressFormData.label}
+                                                onValueChange={(value) =>
+                                                  handleAddressInputChange(
+                                                    "label",
+                                                    value
+                                                  )
+                                                }
+                                              >
+                                                <SelectTrigger className="min-w-full">
+                                                  <SelectValue placeholder="Select address type" />
+                                                </SelectTrigger>
+                                                <SelectContent className="min-w-full">
+                                                  <SelectItem value="Home">
+                                                    Home
+                                                  </SelectItem>
+                                                  <SelectItem value="Office">
+                                                    Office
+                                                  </SelectItem>
+                                                  <SelectItem value="Work">
+                                                    Work
+                                                  </SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+                                      <FormField
+                                        // defaultValue={address.isDefault}
+                                        control={form.control}
+                                        name="isDefault"
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel>Default</FormLabel>
+                                            <FormControl>
+                                              <div className="flex items-center gap-3">
+                                                <input
+                                                  id="label"
+                                                  type="checkbox"
+                                                  checked={field.value}
+                                                  onChange={field.onChange}
+                                                  onBlur={field.onBlur}
+                                                  name={field.name}
+                                                  ref={field.ref}
+                                                />
+                                                <Label
+                                                  className="text-sm"
+                                                  htmlFor="isDefault"
+                                                >
+                                                  Set as default address
+                                                </Label>
+                                              </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+                                      <Button
+                                        className="w-max mx-auto"
+                                        type="submit"
+                                      >
+                                        {updating ? "submitting..." : "Submit"}
+                                      </Button>
+                                    </form>
+                                  </Form>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                             <Button
                               onClick={() => handleDelete(address._id)}
                               size="sm"
