@@ -8,6 +8,8 @@ import {
   addAddress,
   deleteAddress,
   UpdateAddress,
+  forgotPassword,
+  newPassword,
 } from "../controllers/auth.controller";
 import { authenticateUser } from "../middlewares/auth.middleware";
 
@@ -21,5 +23,7 @@ authRoutes.post("/addAddress", authenticateUser, addAddress);
 authRoutes.delete("/address/:id", authenticateUser, deleteAddress);
 authRoutes.put("/address/:id", authenticateUser, UpdateAddress);
 authRoutes.get("/logout", authenticateUser, Logout);
+authRoutes.post("/forgotPassword", forgotPassword);
+authRoutes.post("/create-password/:id", newPassword);
 
 export default authRoutes;

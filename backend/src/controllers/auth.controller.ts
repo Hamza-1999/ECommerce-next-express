@@ -72,7 +72,6 @@ export const Register = async (req: Request, res: Response) => {
     if (existingUser) {
       // throw new Error("User already exists");
       return res.status(400).json({ message: "Email already exists" });
-
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -86,12 +85,6 @@ export const Register = async (req: Request, res: Response) => {
       address,
     });
     const { password: _, ...userWithoutPassword } = user.toObject();
-    await sendEmail({
-      to: "user@example.com",
-      subject: "Welcome to our Service",
-      templateName: "welcome",
-      templateData: { name: "John" },
-    });
     res.status(201).json({
       message: "User created successfully",
       user: userWithoutPassword,
@@ -355,12 +348,69 @@ export const Logout = async (req: Request, res: Response) => {
 
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
-    const id = (req as any).user._id;
+    const { email } = req.body;
+    if (email) {
+      const encodedEmail = await jwt.sign(
+        { email },
+        (process.env.JWT_SECRET as string) || "secret_key_Ecommerce",
+        { expiresIn: "1h" }
+      );
+      const user = await User.findOne({ email });
+      if (user) {
+        await sendEmail({
+          to: email,
+          subject: "Link To Create New Password",
+          templateName: "forgotPassword",
+          templateData: {
+            link: `http://localhost:3000/user/forgot-password/${encodedEmail}`,
+          },
+        });
+        return res.status(200).json({
+          message: `Email Send On Your Email ${email}`,
+          success: true,
+        });
+      } else {
+        return res.status(400).json({ message: "Email Is Not Registered" });
+      }
+    }
   } catch (err) {
     console.log(err, "error in forgot password");
     res.status(500).json({
       message: "Internal Server Error",
       error: (err as Error).message,
     });
+  }
+};
+
+export const newPassword = async (req: Request, res: Response) => {
+  const JWT_SECRET = process.env.JWT_SECRET || "secret_key_Ecommerce";
+  try {
+    const { id } = req.params; 
+    const { password } = req.body;
+
+    const decoded = jwt.verify(id, JWT_SECRET) as { email: string };
+
+    if (!decoded || !decoded.email) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    const user = await User.findOne({ email: decoded.email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const encodedPassword = await bcrypt.hash(password, 10);
+    await User.findByIdAndUpdate(
+      user._id,
+      { $set: { password: encodedPassword } },
+      { new: true, runValidators: true, select: "-password" }
+    );
+
+    return res
+      .status(200)
+      .json({ message: "Successfully created new password" });
+  } catch (err) {
+    console.error("Error occurred in creating new password:", err);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };
