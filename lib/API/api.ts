@@ -52,7 +52,7 @@ export const Register = async ({
   });
   try {
     const res = await axios.post(
-      "https://hijaab-collections/auth/register",
+      "http://localhost:5000/auth/register",
       {
         firstName,
         lastName,
