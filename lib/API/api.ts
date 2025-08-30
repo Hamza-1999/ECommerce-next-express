@@ -52,7 +52,7 @@ export const Register = async ({
   });
   try {
     const res = await axios.post(
-      "http://localhost:5000/auth/register",
+      "https://hijaab-collections/auth/register",
       {
         firstName,
         lastName,
@@ -143,7 +143,7 @@ export const UpdateAddress = async (id: string, data: IAddAddress) => {
 };
 
 export const forgotPassword = async (email: string) => {
-  const res = await axios.post(`http://localhost:5000/auth/forgotPassword`, {
+  const res = await axios.post(`https://hijaab-collections.up.railway.app/auth/forgotPassword`, {
     email,
   });
   return res.data;
