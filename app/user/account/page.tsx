@@ -134,7 +134,7 @@ export default function AccountPage() {
       onError: (error: any) => {
         toast.error(error?.response?.data?.message || "error to logout");
       },
-    });
+    });a
   };
 
   const handleSaveProfile = () => {
