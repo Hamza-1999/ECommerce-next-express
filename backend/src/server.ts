@@ -13,9 +13,8 @@ dotenv.config();
 
 // Middleware
 app.use(cors({
-  origin: "*", // or specify your frontend URL
-  methods: "GET,POST,PUT,DELETE",
-  credentials: true
+  origin: "http://localhost:3000",
+  credentials: true,
 }));
 
 app.use(cookieParser());
